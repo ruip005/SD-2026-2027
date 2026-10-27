@@ -1,0 +1,11 @@
+p0: 13 registos
+p1: 1 registos
+p2: 0 registos
+Pares entre partições (a em partição menor que b):
+a → b: 1
+b → a: 0
+Pares causais: 1
+Pares concorrentes: 12
+Concorrentes com L distinto: 11 (91.6667%)
+Violações da condição de relógio: 0
+RESULTADO: OK

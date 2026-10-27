@@ -1,0 +1,11 @@
+--- correto/PartitionLeader.java
++++ 8a-sem-merge/PartitionLeader.java
+@@ -154,7 +154,7 @@
+                 // Prepara o novo estado sem alterar o estado confirmado se append falhar.
+                 long nextL = Math.incrementExact(Math.max(lamport, receivedL));
+                 VectorClock nextV = vector.copy();
+-                nextV.merge(receivedV);
++                // FALHA: merge omitido
+                 nextV.tick(k);
+                 long nextSeq = Math.incrementExact(ultimoSeq);
+                 if (nextV.get(k) != nextSeq) {

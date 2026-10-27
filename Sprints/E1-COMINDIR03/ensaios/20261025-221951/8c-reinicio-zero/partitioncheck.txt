@@ -1,0 +1,14 @@
+Partição 0
+  líder: 0 registos, 0 sensores distintos
+  replica-1-p0.txt: igual ao líder
+  replica-3-p0.txt: igual ao líder
+Partição 1
+  líder: 1 registos, 1 sensores distintos
+  replica-1-p1.txt: igual ao líder
+  replica-2-p1.txt: igual ao líder
+Partição 2
+  líder: 1 registos, 1 sensores distintos
+  replica-2-p2.txt: prefixo do líder, faltam 1 registos
+  replica-3-p2.txt: prefixo do líder, faltam 1 registos
+Total do sistema: 2 registos; soma das partições 0..2: 2
+RESULTADO: OK

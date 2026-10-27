@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "output": "p0: 0 registos\np1: 1 registos\np2: 1 registos\nPares entre partições (a em partição menor que b):\na → b: 1\nb → a: 0\nPares causais: 1\nPares concorrentes: 0\nConcorrentes com L distinto: 0 (0.0000%)\nViolações da condição de relógio: 0\nRESULTADO: OK\n",
+  "registos": [
+    0,
+    1,
+    1
+  ],
+  "alarmes_gravados": 1,
+  "originais": 1,
+  "alarmes_publicados": 1,
+  "causais": 1,
+  "concorrentes": 0,
+  "concorrentes_L_distinto": 0,
+  "proporcao": 0,
+  "REG_sem_carimbos_media_bytes": 52.0,
+  "REG_com_carimbos_media_bytes": 60.0,
+  "vetor_media_bytes": 5.0,
+  "partitioncheck_exit": 0
+}

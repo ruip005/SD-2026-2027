@@ -1,0 +1,12 @@
+Partição 0
+  líder: 0 registos, 0 sensores distintos
+  FALHA: réplicas: esperadas 2, encontradas 0
+Partição 1
+  líder: 1 registos, 1 sensores distintos
+  replica-1-p1.txt: igual ao líder
+  replica-2-p1.txt: igual ao líder
+Partição 2
+  líder: 2 registos, 2 sensores distintos
+  FALHA: réplicas: esperadas 2, encontradas 0
+Total do sistema: 3 registos; soma das partições 0..2: 3
+RESULTADO: FALHOU
