@@ -24,5 +24,6 @@ public interface Recuperador {
      * @throws IOException se a ligação for recusada, esgotar o tempo, o líder responder
      *                     {@code ERRO} ou a ligação terminar antes de {@code FIM}
      */
+    // Define a recuperação de um intervalo do líder, entregando cada linha ao callback; pode ser simulado nos testes.
     void pedir(String host, int porto, long de, long ate, Consumer<String> linha) throws IOException;
 }

@@ -14,6 +14,7 @@ public final class AlarmProcessor {
     private long lamport;
     private final VectorClock vector;
 
+    // Inicializa Lp e Vp e cria um conjunto de seq observados por partição para detetar duplicados.
     public AlarmProcessor(int n, Publisher publisher) {
         partitioner = new Partitioner(n);
         this.publisher = publisher;
@@ -22,6 +23,7 @@ public final class AlarmProcessor {
     }
 
     /** Devolve true apenas quando uma leitura nova foi aceite. */
+    // Valida REG, ignora alarmes e duplicados, acumula Lp/Vp e publica um alarme quando a temperatura atinge o limiar.
     public boolean onReg(int k, String msg) {
         SensorRecord r;
         try {
@@ -62,6 +64,7 @@ public final class AlarmProcessor {
         return true;
     }
 
+    // Subscreve todas as partições com uma thread por tópico e volta a tentar a subscrição se a ligação falhar.
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Uso: AlarmProcessor <N> [api]");

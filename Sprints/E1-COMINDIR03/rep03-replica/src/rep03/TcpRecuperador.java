@@ -28,6 +28,7 @@ public class TcpRecuperador implements Recuperador {
     private final int timeoutMs;
 
     /** Usa o tempo limite da ficha, {@link Wire#T_TCP_MS}. */
+    // Configura o tempo limite de ligação e leitura, usando o valor padrão ou o recebido no construtor.
     public TcpRecuperador() {
         this(Wire.T_TCP_MS);
     }
@@ -37,11 +38,13 @@ public class TcpRecuperador implements Recuperador {
      *
      * @param timeoutMs tempo máximo de ligação e de cada leitura, em milissegundos
      */
+    // Configura o tempo limite de ligação e leitura, usando o valor padrão ou o recebido no construtor.
     public TcpRecuperador(int timeoutMs) {
         this.timeoutMs = timeoutMs;
     }
 
     @Override
+    // Liga ao líder, envia PEDIDO e entrega cada linha ao callback até FIM; sinaliza erros e ligações incompletas.
     public void pedir(String host, int porto, long de, long ate, Consumer<String> linha) throws IOException {
         try (Socket s = new Socket()) {
             s.connect(new InetSocketAddress(host, porto), timeoutMs);

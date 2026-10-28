@@ -35,6 +35,7 @@ public class RecordFile {
      *
      * @param fileName caminho do ficheiro
      */
+    // Associa o objeto ao caminho do ficheiro onde os registos serão guardados.
     public RecordFile(String fileName) {
         this.path = Paths.get(fileName);
     }
@@ -45,6 +46,7 @@ public class RecordFile {
      * @param r registo a escrever
      * @throws IOException se a escrita falhar
      */
+    // Acrescenta o registo completo ao ficheiro; pode também registar intervalos de escrita para os ensaios.
     public synchronized void append(SensorRecord r) throws IOException {
         String trace = System.getProperty("rep03.traceWrites");
         long start = trace == null ? 0 : System.nanoTime();
@@ -72,12 +74,14 @@ public class RecordFile {
      * @return o último {@code seq}, ou 0 se o ficheiro não existir ou estiver vazio
      * @throws IOException se a leitura falhar
      */
+    // Consulta o último registo e devolve o seu seq, ou zero quando ainda não há registos.
     public synchronized long lastSeq() throws IOException {
         SensorRecord r = last();
         return r == null ? 0 : r.getSeq();
     }
 
     /** Último registo completo, ou null se o ficheiro não existe ou está vazio. */
+    // Lê o último registo persistido, incluindo seq, L e V, para retomar o estado depois de um reinício.
     public synchronized SensorRecord last() throws IOException {
         if (!Files.exists(path)) return null;
         SensorRecord last = null;
@@ -96,6 +100,7 @@ public class RecordFile {
      * @return lista possivelmente vazia (ficheiro inexistente, intervalo vazio ou fora do ficheiro)
      * @throws IOException se a leitura falhar
      */
+    // Lê os registos com seq no intervalo inclusivo pedido, pela ordem em que aparecem no ficheiro.
     public synchronized List<SensorRecord> range(long from, long to) throws IOException {
         List<SensorRecord> out = new ArrayList<>();
         if (!Files.exists(path)) {

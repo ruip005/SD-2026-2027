@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PartitionReplica {
 
     /** Classe não instanciável: só tem métodos estáticos e a classe interna {@link Particao}. */
+    // Impede instanciar a classe exterior; o estado de cada partição fica na classe interna Particao.
     private PartitionReplica() {
     }
 
@@ -96,6 +97,7 @@ public class PartitionReplica {
          * @param recuperador canal de recuperação junto do líder
          * @throws IOException se não for possível ler o último {@code seq} do ficheiro
          */
+        // Inicializa uma partição da réplica, retomando o último seq escrito no respetivo ficheiro.
         public Particao(int k, RecordFile file, Recuperador recuperador) throws IOException {
             this.k = k;
             this.file = file;
@@ -108,6 +110,7 @@ public class PartitionReplica {
          *
          * @return o último {@code seq} escrito no ficheiro desta partição
          */
+        // Consulta com sincronização o último seq aplicado nesta partição.
         public synchronized long getUltimo() {
             return ultimo;
         }
@@ -117,6 +120,7 @@ public class PartitionReplica {
          *
          * @return o número de registos retidos em memória à espera de um anterior
          */
+        // Consulta com sincronização quantos registos aguardam a chegada de anteriores.
         public synchronized int getRetidos() {
             return retidos.size();
         }
@@ -127,6 +131,7 @@ public class PartitionReplica {
          *
          * @param msg mensagem {@code REG} completa
          */
+        // Extrai o registo e o endereço de recuperação do líder e entrega o registo à regra de aplicação.
         public synchronized void onReg(String msg) {
             try {
                 if (!"REG".equals(Wire.type(msg))) {
@@ -160,6 +165,7 @@ public class PartitionReplica {
          *
          * @param r registo recebido, por PubSub ou por recuperação
          */
+        // Aplica ou retém o registo por seq e pede recuperação quando o número de retidos excede o limite.
         public synchronized void aplicar(SensorRecord r) {
             if (!aplicarSemRecuperar(r)) {
                 return;
@@ -177,6 +183,7 @@ public class PartitionReplica {
          * @param r registo a aplicar
          * @return {@code false} se o registo era duplicado; {@code true} se foi escrito ou retido
          */
+        // Ignora duplicados, escreve o próximo seq ou retém um registo adiantado, sem iniciar outra recuperação.
         private boolean aplicarSemRecuperar(SensorRecord r) {
             long seq = r.getSeq();
             if (seq <= ultimo || retidos.containsKey(seq)) {
@@ -200,6 +207,7 @@ public class PartitionReplica {
          * @param r registo a escrever
          * @throws IllegalStateException se o ficheiro não puder ser escrito
          */
+        // Persiste o registo recebido com os seus carimbos e só depois avança o último seq aplicado.
         private void escrever(SensorRecord r) {
             try {
                 file.append(r);
@@ -210,6 +218,7 @@ public class PartitionReplica {
         }
 
         /** Escreve os registos retidos que passaram a estar em sequência com o último escrito. */
+        // Escreve os retidos consecutivos a partir de ultimo+1, parando quando falta o seguinte.
         public synchronized void escreverEmSequencia() {
             while (!retidos.isEmpty() && retidos.firstKey() == ultimo + 1) {
                 escrever(retidos.pollFirstEntry().getValue());
@@ -221,6 +230,7 @@ public class PartitionReplica {
          * aplica cada registo recebido segundo a mesma regra, sem voltar a desencadear recuperação.
          * Se falhar, mantém o que já foi escrito e os retidos; é tentada de novo no próximo registo.
          */
+        // Pede por TCP o intervalo em falta antes do primeiro retido e aplica cada linha devolvida pelo líder.
         public synchronized void recuperar() {
             if (retidos.isEmpty() || hostLider == null) {
                 return;
@@ -254,6 +264,7 @@ public class PartitionReplica {
      * @param descartarSeq {@code seq} a descartar uma única vez, ou {@code -1} para nenhum
      * @return {@code true} se a mensagem foi descartada pela simulação
      */
+    // Simula perda aleatória ou descarte de um seq na receção PubSub; entrega à partição as mensagens não descartadas.
     static boolean simular(Particao p, String msg, double perda, long descartarSeq) {
         synchronized (RND) {
             boolean descarta = false;
@@ -285,6 +296,7 @@ public class PartitionReplica {
      * @param args {@code <id> <k1,k2> [portoApi]}
      * @throws Exception se o Kubo não estiver acessível
      */
+    // Cria o estado das partições atribuídas à réplica e arranca uma thread de subscrição para cada uma.
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
             System.err.println("Uso: PartitionReplica <id> <k1,k2> [portoApi]  [-Dperda=p] [-Ddescartar=seq]");

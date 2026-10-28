@@ -48,6 +48,7 @@ public class Producer {
      * @param partitioner função de partição
      * @param publisher   destino das mensagens {@code IN}
      */
+    // Recebe a função de partição e o publicador, permitindo usar transporte real ou simulado nos testes.
     public Producer(Partitioner partitioner, Publisher publisher) {
         this.partitioner = partitioner;
         this.publisher = publisher;
@@ -62,6 +63,7 @@ public class Producer {
      * @throws IllegalArgumentException se o sensor ou a temperatura forem inválidos (nada é publicado)
      * @throws Exception se a publicação falhar
      */
+    // Valida a leitura, calcula o destino e envia IN com L=0 e vetor zero, pois o produtor não observa registos.
     public int publicar(String sensor, double temp) throws Exception {
         validar(sensor, temp);
         int k = partitioner.of(sensor);
@@ -82,6 +84,7 @@ public class Producer {
      * @throws IllegalArgumentException se o sensor for nulo, vazio, tiver {@code ;} ou espaços, ou
      *                                  se a temperatura não for um número finito
      */
+    // Rejeita sensores incompatíveis com o formato textual e temperaturas que não sejam números finitos.
     public static void validar(String sensor, double temp) {
         if (sensor == null || sensor.isBlank() || sensor.contains(";") || !sensor.equals(sensor.trim())
                 || sensor.chars().anyMatch(Character::isWhitespace)) {
@@ -102,6 +105,7 @@ public class Producer {
      * @return número de leituras publicadas por partição
      * @throws Exception se a publicação falhar
      */
+    // Gera n leituras aleatórias para s sensores e conta os envios por partição; o modo quente concentra leituras em S01.
     public int[] rajada(int n, int s, boolean quente, Random rnd) throws Exception {
         int[] porParticao = new int[partitioner.count()];
         for (int i = 0; i < n; i++) {
@@ -119,6 +123,7 @@ public class Producer {
      * @param args {@code <N> [api]}
      * @throws Exception se o Kubo não estiver acessível
      */
+    // Arranca a consola do produtor e interpreta comandos de leitura, rajada e saída.
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Uso: Producer <N> [api]");

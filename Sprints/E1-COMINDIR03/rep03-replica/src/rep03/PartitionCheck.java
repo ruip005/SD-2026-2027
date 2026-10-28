@@ -38,6 +38,7 @@ public class PartitionCheck {
         public boolean ok = true;
 
         /** Cria um resultado vazio e conforme. */
+        // Cria o relatório inicialmente sem falhas e com uma lista vazia de mensagens.
         public Resultado() {
         }
 
@@ -46,6 +47,7 @@ public class PartitionCheck {
          *
          * @param msg descrição da falha
          */
+        // Acrescenta o diagnóstico ao relatório e marca a verificação como falhada.
         void falha(String msg) {
             ok = false;
             linhas.add("  FALHA: " + msg);
@@ -53,6 +55,7 @@ public class PartitionCheck {
     }
 
     /** Classe utilitária: não se instancia. */
+    // Impede criar instâncias desta ferramenta, que é utilizada através de métodos estáticos.
     private PartitionCheck() {
     }
 
@@ -63,6 +66,7 @@ public class PartitionCheck {
      * @return as linhas, sem as vazias
      * @throws IOException se o ficheiro não puder ser lido
      */
+    // Lê um ficheiro UTF-8, retirando linhas vazias e espaços exteriores.
     private static List<String> linhasDe(Path f) throws IOException {
         List<String> out = new ArrayList<>();
         for (String l : Files.readAllLines(f, StandardCharsets.UTF_8)) {
@@ -81,6 +85,7 @@ public class PartitionCheck {
      * @return o relatório e o veredicto global
      * @throws IOException se algum ficheiro não puder ser lido
      */
+    // Verifica partição e seq dos registos, quantidade de réplicas e se cada ficheiro é igual ou prefixo do líder.
     public static Resultado verificar(int n, Path pasta) throws IOException {
         Resultado res = new Resultado();
         Partitioner part = new Partitioner(n);
@@ -154,6 +159,7 @@ public class PartitionCheck {
      * @param args {@code <N> <pasta>}
      * @throws IOException se algum ficheiro não puder ser lido
      */
+    // Recebe N e a pasta de ensaio, imprime o relatório e termina com código 1 se houver falhas.
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             System.err.println("Uso: PartitionCheck <N> <pasta>");

@@ -14,5 +14,6 @@ public interface Publisher {
      * @param message conteúdo da mensagem
      * @throws Exception se a publicação falhar
      */
+    // Define o envio de uma mensagem para um tópico; permite trocar o Kubo por um publicador em memória nos testes.
     void publish(String topic, String message) throws Exception;
 }

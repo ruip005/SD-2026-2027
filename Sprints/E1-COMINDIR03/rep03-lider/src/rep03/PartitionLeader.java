@@ -86,6 +86,7 @@ public class PartitionLeader {
      * @param publisher   destino das mensagens {@code REG}
      * @throws IOException se não for possível ler o último {@code seq} do ficheiro
      */
+    // Recupera seq, L e V do último registo persistido e verifica a compatibilidade com a partição e N.
     public PartitionLeader(int k, Partitioner partitioner, RecordFile file, String host, int porto,
                            Publisher publisher) throws IOException {
         this.k = k;
@@ -108,6 +109,7 @@ public class PartitionLeader {
      *
      * @return o último número de sequência atribuído e escrito
      */
+    // Consulta sob o mesmo lock o último seq confirmado pelo líder.
     public long getUltimoSeq() {
         synchronized (lock) {
             return ultimoSeq;
@@ -120,6 +122,7 @@ public class PartitionLeader {
      * @param msg mensagem recebida no tópico de entrada
      * @return {@code true} se o registo foi aceite (escrito em ficheiro); {@code false} se rejeitado
      */
+    // Valida IN e, sob o lock, prepara relógios e seq, verifica V[k]==seq e escreve; depois publica REG fora do lock.
     public boolean onIn(String msg) {
         if (!"IN".equals(Wire.type(msg))) {
             System.out.println("REJEITADO: " + msg);
@@ -187,6 +190,7 @@ public class PartitionLeader {
      * @return as linhas da resposta: zero ou mais registos seguidos de {@code FIM}, ou uma única
      *         linha {@code ERRO <motivo>}
      */
+    // Valida PEDIDO <de> <até> e devolve as linhas persistidas desse intervalo, terminando com FIM.
     public List<String> processarPedido(String linha) {
         String[] t = linha == null ? new String[0] : linha.trim().split("\\s+");
         if (t.length != 3 || !t[0].equals("PEDIDO")) {
@@ -223,6 +227,7 @@ public class PartitionLeader {
      *
      * @param s socket da ligação (é fechado no fim)
      */
+    // Atende uma ligação TCP de recuperação, lendo pedidos e enviando respostas com tempo limite de leitura.
     public void atender(Socket s) {
         try (Socket sock = s;
              BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream(), StandardCharsets.UTF_8));
@@ -245,6 +250,7 @@ public class PartitionLeader {
      * @param ss socket de escuta
      * @throws IOException se o {@code accept()} falhar
      */
+    // Aceita ligações TCP e atende cada uma sequencialmente até o servidor fechar.
     public void servir(ServerSocket ss) throws IOException {
         while (!ss.isClosed()) {
             atender(ss.accept());
@@ -257,6 +263,7 @@ public class PartitionLeader {
      * @param args {@code <k> <N> [endereço] [api]}
      * @throws Exception se o Kubo ou o porto de recuperação não estiverem disponíveis
      */
+    // Configura o líder, reserva o porto TCP e arranca a subscrição de IN numa thread separada.
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
             System.err.println("Uso: PartitionLeader <k> <N> [endereço] [api]");

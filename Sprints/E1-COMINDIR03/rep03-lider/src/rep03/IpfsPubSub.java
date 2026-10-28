@@ -42,6 +42,7 @@ public class IpfsPubSub implements Publisher {
      *
      * @param api URL base da API do Kubo, por exemplo {@code http://127.0.0.1:5001/api/v0}
      */
+    // Guarda o endereço da API HTTP do Kubo que será usada para publicar e subscrever.
     public IpfsPubSub(String api) {
         this.api = api;
     }
@@ -53,6 +54,7 @@ public class IpfsPubSub implements Publisher {
      * @return o texto codificado, com prefixo {@code u}
      */
     // o Kubo exige o tópico e os dados em multibase: base64url sem padding, com prefixo 'u'
+    // Codifica texto UTF-8 em base64url sem padding, acrescentando o prefixo multibase u exigido pelo Kubo.
     static String toMultibase(String s) {
         return "u" + Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(s.getBytes(StandardCharsets.UTF_8));
@@ -65,6 +67,7 @@ public class IpfsPubSub implements Publisher {
      * @return o texto original
      * @throws IllegalArgumentException se o prefixo não for {@code u}
      */
+    // Valida o prefixo u e descodifica o conteúdo base64url para texto UTF-8.
     static String fromMultibase(String s) {
         if (!s.startsWith("u")) {
             throw new IllegalArgumentException("Codificação multibase não suportada: " + s);
@@ -81,6 +84,7 @@ public class IpfsPubSub implements Publisher {
      * @throws InterruptedException se a thread for interrompida durante o pedido
      */
     @Override
+    // Publica pelo Kubo e repete apenas a rejeição validation ignored, com pausa e limite de tentativas.
     public void publish(String topic, String message) throws IOException, InterruptedException {
         for (int tentativa = 1; ; tentativa++) {
             HttpResponse<String> resp = enviar(topic, message);
@@ -105,6 +109,7 @@ public class IpfsPubSub implements Publisher {
      * @throws IOException          se a ligação ao Kubo falhar
      * @throws InterruptedException se a thread for interrompida durante o pedido
      */
+    // Monta o corpo multipart e executa o pedido HTTP de publicação, devolvendo a resposta do Kubo.
     private HttpResponse<String> enviar(String topic, String message) throws IOException, InterruptedException {
         String boundary = "rep03-" + System.nanoTime();
         String body = "--" + boundary + "\r\n"
@@ -129,6 +134,7 @@ public class IpfsPubSub implements Publisher {
      * @throws IOException          se o Kubo responder com erro ou a ligação cair
      * @throws InterruptedException se a thread for interrompida
      */
+    // Mantém a subscrição HTTP aberta, descodifica cada mensagem recebida e chama onMessage; bloqueia a thread.
     public void subscribe(String topic, Consumer<String> onMessage) throws IOException, InterruptedException {
         HttpRequest req = HttpRequest.newBuilder(URI.create(api + "/pubsub/sub?arg=" + toMultibase(topic)))
                 .POST(HttpRequest.BodyPublishers.noBody())
@@ -151,6 +157,7 @@ public class IpfsPubSub implements Publisher {
      * @throws IllegalArgumentException se o campo não existir
      */
     // extração mínima de um campo de texto de um objeto JSON simples (evita bibliotecas externas)
+    // Extrai um campo de texto do JSON simples recebido do Kubo, sem recorrer a bibliotecas externas.
     static String extractField(String json, String field) {
         String key = "\"" + field + "\":\"";
         int start = json.indexOf(key);

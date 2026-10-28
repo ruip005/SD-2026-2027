@@ -29,6 +29,7 @@ public final class Wire {
     public static final int PORTO_BASE = 7000;
 
     /** Classe utilitária: não se instancia. */
+    // Impede criar instâncias desta classe, que reúne apenas constantes e métodos estáticos.
     private Wire() {
     }
 
@@ -38,6 +39,7 @@ public final class Wire {
      * @param k partição
      * @return nome do tópico de entrada da partição ({@code rep03-in-p<k>})
      */
+    // Constrói o nome rep03-in-p<k>, onde o líder recebe leituras originais e alarmes.
     public static String topicIn(int k) {
         return "rep03-in-p" + k;
     }
@@ -48,6 +50,7 @@ public final class Wire {
      * @param k partição
      * @return nome do tópico de dados da partição ({@code rep03-p<k>})
      */
+    // Constrói o nome rep03-p<k>, onde o líder publica os registos para réplicas e processador.
     public static String topicData(int k) {
         return "rep03-p" + k;
     }
@@ -59,6 +62,7 @@ public final class Wire {
      * @param temp   temperatura
      * @return {@code IN;<sensor>;<temp>;<L>;<V>}
      */
+    // Constrói a mensagem IN com sensor, temperatura e conhecimento causal L e V do emissor.
     public static String in(String sensor, double temp, long lamport, VectorClock vector) {
         return "IN;" + sensor + ";" + temp + ";" + lamport + ";" + vector;
     }
@@ -71,6 +75,7 @@ public final class Wire {
      * @param r     registo já numerado e escrito
      * @return {@code REG;<host>;<porto>;<seq>;<sensor>;<temp>;<instante>;<L>;<V>}
      */
+    // Constrói a mensagem REG com o endereço TCP do líder e o registo completo, incluindo L e V.
     public static String reg(String host, int port, SensorRecord r) {
         return "REG;" + host + ";" + port + ";" + r.toLine();
     }
@@ -81,6 +86,7 @@ public final class Wire {
      * @param msg mensagem completa
      * @return o tipo (texto antes do primeiro {@code ;}); a mensagem inteira se não houver {@code ;}
      */
+    // Obtém o tipo da mensagem, lendo o texto anterior ao primeiro ponto e vírgula.
     public static String type(String msg) {
         int i = msg.indexOf(';');
         return i < 0 ? msg : msg.substring(0, i);
@@ -92,6 +98,7 @@ public final class Wire {
      * @param msg mensagem completa
      * @return o texto depois do primeiro {@code ;}; vazio se não houver {@code ;}
      */
+    // Obtém os campos posteriores ao tipo da mensagem, retirando o primeiro separador.
     public static String body(String msg) {
         int i = msg.indexOf(';');
         return i < 0 ? "" : msg.substring(i + 1);
@@ -105,6 +112,7 @@ public final class Wire {
      *         {@link SensorRecord#toLine()}
      * @throws IllegalArgumentException se o corpo não tiver pelo menos três partes
      */
+    // Separa o corpo de REG em endereço, porto e linha de registo, mantendo juntos os campos do registo.
     public static String[] regParts(String msg) {
         String[] p = body(msg).split(";", 3);
         if (p.length != 3) {

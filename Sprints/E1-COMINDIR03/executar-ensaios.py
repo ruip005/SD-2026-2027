@@ -5,16 +5,21 @@ ROOT=Path(__file__).resolve().parent
 HIDDEN=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
 HTTP=urllib.request.build_opener(urllib.request.ProxyHandler({}))
 API='http://127.0.0.1:5001/api/v0'
+# Faz um pedido à API HTTP do Kubo e interpreta a resposta JSON.
 def rpc(cmd): return json.loads(HTTP.open(urllib.request.Request(API+'/'+cmd,method='POST'),timeout=5).read())
+# Executa um comando com limite de tempo e recolhe a saída e os erros.
 def run(cmd,cwd=None,timeout=120):
     return subprocess.run(list(map(str,cmd)),cwd=cwd,capture_output=True,encoding='utf-8',errors='replace',timeout=timeout,creationflags=HIDDEN)
+# Espera até a condição indicada ser verdadeira, ou falha ao esgotar o tempo limite.
 def wait(pred,why,timeout=30):
     end=time.monotonic()+timeout
     while time.monotonic()<end:
         if pred(): return
         time.sleep(.15)
     raise RuntimeError('Tempo esgotado: '+why)
+# Lê um ficheiro UTF-8; devolve texto vazio se o ficheiro ainda não existir.
 def read(p): return p.read_text(encoding='utf-8') if p.exists() else ''
+# Consulta os tópicos subscritos no Kubo e descodifica os nomes em multibase.
 def topics():
     result=set()
     for t in rpc('pubsub/ls').get('Strings',[]) or []:
@@ -23,6 +28,7 @@ def topics():
             except (ValueError,UnicodeDecodeError): pass
         result.add(t)
     return result
+# Lê os ficheiros do ensaio e converte cada registo em campos usados nas medições.
 def rows(folder,pattern='lider-p*.txt'):
     result=[]
     for p in sorted(folder.glob(pattern)):
@@ -32,15 +38,18 @@ def rows(folder,pattern='lider-p*.txt'):
             if len(f)!=6: continue
             result.append(dict(k=k,seq=int(f[0]),sensor=f[1],temp=float(f[2]),time=f[3],L=int(f[4]),V=list(map(int,f[5].split(','))),line=line))
     return result
+# Compila separadamente os quatro projetos Java com compatibilidade Java 11.
 def compile_projects():
     for role in ['produtor','lider','replica','processador']:
         p=ROOT/('rep03-'+role)
         r=run(['javac','--release','11','-encoding','UTF-8','-d',p/'out',*sorted((p/'src/rep03').glob('*.java'))])
         if r.returncode: raise RuntimeError(r.stdout+r.stderr)
 class System:
+    # Guarda a pasta, as variantes e as opções do cenário, preparando o controlo dos processos.
     def __init__(self,folder,variants=None,processor=True,loss=False):
         self.folder=folder; self.variants=variants or {}; self.processor=processor; self.loss=loss
         self.processes={}; self.logs=[]
+    # Arranca um processo Java, guarda os logs e regista o comando e o PID nas provas do ensaio.
     def start(self,name,role,main,*args,props=()):
         self.folder.mkdir(parents=True,exist_ok=True)
         index=len(list(self.folder.glob(name+'*.stdout.log')))
@@ -54,12 +63,14 @@ class System:
         with (self.folder/'processos.jsonl').open('a',encoding='utf-8') as f:
             f.write(json.dumps(dict(at=dt.datetime.now(dt.timezone.utc).isoformat(),pid=p.pid,name=name,command=cmd),ensure_ascii=False)+'\n')
         return p
+    # Termina um processo iniciado pelo ensaiador, forçando a saída se o prazo terminar.
     def stop(self,name):
         p=self.processes.pop(name,None)
         if p and p.poll() is None:
             p.terminate()
             try: p.wait(timeout=8)
             except subprocess.TimeoutExpired: p.kill(); p.wait(timeout=5)
+    # Prepara os ficheiros e arranca réplicas, líderes, processador e produtor pela ordem prevista.
     def __enter__(self):
         try:
             self.folder.mkdir(parents=True,exist_ok=True)
@@ -83,11 +94,14 @@ class System:
             self.producer(); return self
         except BaseException:
             self.__exit__(); raise
+    # Reinicia o produtor com a dimensão N pedida, incluindo o cenário de dimensão incompatível.
     def producer(self,n=3):
         self.stop('produtor'); self.start('produtor','produtor','Producer',n); time.sleep(.4)
+    # Regista o comando do ensaio e envia-o para a entrada da consola do produtor.
     def send(self,command):
         with (self.folder/'comandos.txt').open('a',encoding='utf-8') as f: f.write(command+'\n')
         p=self.processes['produtor']; p.stdin.write((command+'\n').encode()); p.stdin.flush()
+    # Espera que os tamanhos dos ficheiros deixem de mudar durante três segundos.
     def settle(self):
         prev=None; stable=time.monotonic(); end=time.monotonic()+60
         while time.monotonic()<end:
@@ -96,10 +110,12 @@ class System:
             if time.monotonic()-stable>3: return
             time.sleep(.2)
         raise RuntimeError('Ficheiros não estabilizaram')
+    # Fecha os processos e logs do cenário e espera que as subscrições desapareçam do Kubo.
     def __exit__(self,*exc):
         for name in list(self.processes): self.stop(name)
         for f in self.logs: f.close()
         wait(lambda:not any(t.startswith('rep03-') for t in topics()),'fechar subscrições',15); time.sleep(.3)
+# Executa os verificadores e guarda as métricas de causalidade, concorrência, alarmes e bytes por mensagem.
 def check(folder):
     p=run(['java','-Dfile.encoding=UTF-8','-Dstdout.encoding=UTF-8','-cp',ROOT/'rep03-replica/out','rep03.CausalCheck',3,folder])
     (folder/'causalcheck.txt').write_text(p.stdout+p.stderr,encoding='utf-8')
@@ -128,6 +144,7 @@ def check(folder):
     (folder/'metricas.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'{folder.name}: {result["registos"]}, causais={causal}, concorrentes={concurrent}, check={result["exit"]}',flush=True)
     return result
+# Executa os ensaios da Figura 1, rajadas, reinício e observação da ordem de escrita na réplica.
 def normal(base):
     folder=base/'7a-figura'; print('Arrancar 7a: Figura 1',flush=True)
     with System(folder) as s:
@@ -157,6 +174,7 @@ def normal(base):
     proof=dict(alarme=alarm,origem=origin,alarme_antes_da_origem=alarm['end']<origin['start'],intervalo_minimo_ms=(origin['start']-alarm['end'])/1e6,perda_simulada='-Ddescartar=1 apenas na réplica 1')
     if not proof['alarme_antes_da_origem']: raise RuntimeError('Inversão não demonstrada')
     (folder/'ordem-escrita.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2),encoding='utf-8'); check(folder)
+# Para e reinicia o líder p2, verificando a continuação dos carimbos persistidos.
 def restart(base):
     print('Arrancar 7d: reinício p2',flush=True); folder=base/'7d-reinicio'
     with System(folder) as s:
@@ -170,6 +188,7 @@ def restart(base):
         if (after['seq'],after['L'],after['V'])!=(2,3,[0,1,2]): raise RuntimeError('Reinício incorreto')
         (folder/'reinicio.json').write_text(json.dumps(dict(antes=before,depois=after),ensure_ascii=False,indent=2),encoding='utf-8'); s.settle()
     check(folder)
+# Cria e compila uma cópia alterada de um projeto e guarda o patch como prova da falha introduzida.
 def variant(base,name,role,transform):
     dst=ROOT/'ensaios-locais/variantes'/base.name/name; src=dst/'src/rep03'; src.mkdir(parents=True,exist_ok=True); patches=[]
     for f in sorted((ROOT/('rep03-'+role)/'src/rep03').glob('*.java')):
@@ -180,6 +199,7 @@ def variant(base,name,role,transform):
     cp=dst/'out'; p=run(['javac','--release','11','-encoding','UTF-8','-d',cp,*sorted(src.glob('*.java'))])
     if p.returncode: raise RuntimeError(p.stdout+p.stderr)
     return {role:cp}
+# Executa os cenários com falhas deliberadas em cópias isoladas e guarda os resultados de cada análise.
 def faults(base):
     for name,old,new in [('8a-sem-merge','                nextV.merge(receivedV);','                // FALHA: merge omitido'),('8b-lamport-sem-mensagem','Math.incrementExact(Math.max(lamport, receivedL))','Math.incrementExact(lamport)')]:
         print('Arrancar '+name,flush=True)
@@ -197,6 +217,7 @@ def faults(base):
         s.start('lider2','lider','PartitionLeader',2,3); wait(lambda:'rep03-in-p2' in topics(),'reabrir p2'); time.sleep(.5)
         s.send('S03 22.0'); wait(lambda:'REJEITADO: V[k]' in read(folder/'lider2-restart1.stdout.log'),'guarda V[k]==seq'); s.settle()
     check(folder)
+    # Transforma a cópia do processador para reproduzir uma publicação com vetor partilhado entre threads.
     def no_copy(f,s):
         if f!='AlarmProcessor.java': return s
         s=s.replace('        String alarm = null;','        String alarm = null;\n        VectorClock pendingVector = null;\n        long pendingLamport = 0;\n        String pendingSensor = null;')
@@ -216,6 +237,7 @@ def faults(base):
         return s.replace('            vector.merge(r.getVector());','            vector.merge(r.getVector());\n            System.out.println("OBSERVADO p" + k + "#" + r.getSeq() + " L=" + lamport + " V=" + vector);')
     for name,copy in [('8d-snapshot-sem-copy',False),('8d-controlo-com-copy',True)]:
         print('Arrancar '+name,flush=True)
+        # Seleciona a variante sem cópia ou o controlo com cópia independente do vetor.
         def transform(f,s):
             result=no_copy(f,s)
             return result.replace('pendingVector = vector; // FALHA: referência sem copy()','pendingVector = vector.copy(); // CONTROLO: snapshot independente') if copy else result
@@ -230,6 +252,7 @@ def faults(base):
         s.producer(4); s.send('S02 29.3'); s.send('S04 22.5'); s.send('sair'); s.processes['produtor'].wait(timeout=30)
         wait(lambda:'REJEITADO: IN;S02' in read(folder/'lider1.stdout.log'),'vetor N=4 rejeitado'); s.settle()
     check(folder)
+# Valida o ambiente, seleciona os ensaios, executa-os e guarda as provas numa pasta própria.
 def main():
     parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('--fase',choices=['normal','falhas','reinicio','tudo'],default='tudo'); parser.add_argument('--pasta',type=Path); a=parser.parse_args()
     base=a.pasta.resolve() if a.pasta else ROOT/'ensaios'/dt.datetime.now().strftime('%Y%m%d-%H%M%S'); base.mkdir(parents=True,exist_ok=True)

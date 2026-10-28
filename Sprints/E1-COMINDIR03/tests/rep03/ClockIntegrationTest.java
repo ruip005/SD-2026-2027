@@ -14,21 +14,27 @@ import java.util.concurrent.Future;
 public final class ClockIntegrationTest {
     private static int checks;
     private static final String TIME = "2026-10-25T12:00:00";
+    // Conta uma verificação e lança AssertionError se a condição esperada não se verificar.
     private static void check(boolean condition, String message) {
         checks++;
         if (!condition) throw new AssertionError(message);
     }
+    // Cria um vetor de dimensão 3 a partir do texto usado nos cenários de teste.
     private static VectorClock v(String s) { return VectorClock.parse(s, 3); }
+    // Cria um registo de teste com instante fixo, facilitando comparações reproduzíveis.
     private static SensorRecord record(long seq, String sensor, double temp, long l, String vector) {
         return new SensorRecord(seq, sensor, temp, TIME, l, v(vector));
     }
+    // Confirma que a operação de teste rejeita uma entrada através de IllegalArgumentException.
     private static void rejected(Runnable action, String message) {
         boolean rejected = false;
         try { action.run(); } catch (IllegalArgumentException e) { rejected = true; }
         check(rejected, message);
     }
+    // Constrói o acesso ao ficheiro do líder da partição k dentro da pasta do teste.
     private static RecordFile file(Path dir, int k) { return new RecordFile(dir.resolve("lider-p" + k + ".txt").toString()); }
 
+    // Testa as quatro relações vetoriais, cópias defensivas, serialização e rejeição de vetores inválidos.
     private static void vectors() {
         check(v("0,1,0").compare(v("0,1,1")) == VectorClock.Order.BEFORE, "before");
         check(v("0,1,1").compare(v("0,1,0")) == VectorClock.Order.AFTER, "after");
@@ -46,6 +52,7 @@ public final class ClockIntegrationTest {
         rejected(() -> v("0,1,0").merge(new VectorClock(4)), "merge dimensão");
     }
 
+    // Reproduz a Figura 1 sem Kubo e verifica alarmes, duplicados, análise, reinício e recuperação da réplica.
     private static void figureAndRecovery(Path root) throws Exception {
         Path dir = Files.createDirectory(root.resolve("figura"));
         Partitioner part = new Partitioner(3);
@@ -96,6 +103,7 @@ public final class ClockIntegrationTest {
         check(Files.readAllLines(dir.resolve("replica-1-p2.txt")).equals(recovered.subList(0,2)), "ficheiros idênticos");
     }
 
+    // Testa a acumulação de várias observações, o limiar inclusivo e a rejeição de duplicados fora de ordem.
     private static void accumulatedKnowledge() {
         List<String> alarms = new ArrayList<>();
         AlarmProcessor p = new AlarmProcessor(3, (t,m) -> alarms.add(m));
@@ -107,6 +115,7 @@ public final class ClockIntegrationTest {
         check(alarms.size() == 1, "duplicado não republica");
     }
 
+    // Envia entradas simultâneas ao líder e verifica seq/L/V e o comportamento quando a escrita falha.
     private static void concurrentLeader(Path root) throws Exception {
         Path dir = Files.createDirectory(root.resolve("concorrencia"));
         Partitioner part = new Partitioner(3);
@@ -129,6 +138,7 @@ public final class ClockIntegrationTest {
         check(!failed.onIn("IN;S01;20;0;0,0,0") && failed.getUltimoSeq() == 0, "falha de append não confirma estado");
     }
 
+    // Usa uma ligação TCP local real para confirmar que os carimbos chegam intactos na recuperação.
     private static void tcpRecovery(Path root) throws Exception {
         Path dir = Files.createDirectory(root.resolve("tcp"));
         PartitionLeader leader = new PartitionLeader(1,new Partitioner(3),file(dir,1),"127.0.0.1",7001,(t,m) -> {});
@@ -150,6 +160,7 @@ public final class ClockIntegrationTest {
         }
     }
 
+    // Cria ficheiros com falhas para testar violações de Lamport, linhas corrompidas e ficheiros ausentes.
     private static void checkerFailures(Path root) throws Exception {
         Path dir = Files.createDirectory(root.resolve("falhas"));
         Files.writeString(dir.resolve("lider-p0.txt"),record(1,"S01",20,5,"1,0,0").toLine());
@@ -163,6 +174,7 @@ public final class ClockIntegrationTest {
         check(!CausalCheck.verificar(3,dir).ok(), "deteta ficheiro em falta");
     }
 
+    // Testa se o analisador deteta L igual ou decrescente em eventos da mesma partição.
     private static void localLamport(Path root) throws Exception {
         Path dir = Files.createDirectory(root.resolve("lamport-local"));
         Path local = dir.resolve("lider-p0.txt");
@@ -186,6 +198,7 @@ public final class ClockIntegrationTest {
         check(r.violations == 2, "verifica também pares locais não consecutivos");
     }
 
+    // Cria a pasta de resultados, executa todos os cenários e imprime o número de verificações concluídas.
     public static void main(String[] args) throws Exception {
         Path root = Path.of(args[0]);
         Files.createDirectories(root);

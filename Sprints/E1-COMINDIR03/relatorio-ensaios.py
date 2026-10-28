@@ -2,6 +2,7 @@
 from pathlib import Path
 import json, statistics, sys
 
+# Lê as provas de uma execução, valida os resultados, calcula as médias e gera o relatório e os ficheiros JSON.
 def main():
     base=Path(sys.argv[1]).resolve()
     summary={p.parent.name:json.loads(p.read_text(encoding='utf-8')) for p in sorted(base.glob('*/metricas.json'))}

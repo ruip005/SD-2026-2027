@@ -28,6 +28,7 @@ public class Partitioner {
      * @param n número de partições (maior que zero)
      * @throws IllegalArgumentException se {@code n < 1}
      */
+    // Valida e guarda o número de partições usado por este processo.
     public Partitioner(int n) {
         if (n < 1) {
             throw new IllegalArgumentException("N tem de ser >= 1: " + n);
@@ -41,6 +42,7 @@ public class Partitioner {
      * @param sensorId identificador do sensor (chave de partição)
      * @return a partição, em {@code [0, n-1]}
      */
+    // Calcula a partição do identificador com floorMod(hashCode, N), obtendo sempre um índice não negativo.
     public int of(String sensorId) {
         return Math.floorMod(sensorId.hashCode(), n);
     }
@@ -50,6 +52,7 @@ public class Partitioner {
      *
      * @return o número de partições
      */
+    // Devolve N, usado para os destinos das mensagens e para a dimensão dos relógios vetoriais.
     public int count() {
         return n;
     }
