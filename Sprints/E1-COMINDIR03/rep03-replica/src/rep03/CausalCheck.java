@@ -29,6 +29,13 @@ public final class CausalCheck {
         private void fail(String message) { invalid++; lines.add("FALHA: " + message); }
     }
 
+    private static void checkLamport(Result result, Event first, Event second) {
+        if (first.r.getLamport() >= second.r.getLamport()) {
+            result.violations++;
+            result.lines.add("VIOLAÇÃO L: " + first.id() + " → " + second.id());
+        }
+    }
+
     public static Result verificar(int n, Path folder) throws IOException {
         Partitioner partitioner = new Partitioner(n);
         if (!Files.isDirectory(folder)) throw new IllegalArgumentException("Pasta inexistente: " + folder);
@@ -65,7 +72,12 @@ public final class CausalCheck {
             Event a = events.get(i);
             for (int j = i + 1; j < events.size(); j++) {
                 Event b = events.get(j);
-                if (a.k == b.k) continue;
+                if (a.k == b.k) {
+                    // A sequência estabelece a ordem causal local, mesmo com carimbos inválidos.
+                    boolean before = a.r.getSeq() < b.r.getSeq();
+                    checkLamport(result, before ? a : b, before ? b : a);
+                    continue; // As estatísticas de pares continuam a abranger só partições diferentes.
+                }
                 VectorClock.Order order = a.v.compare(b.v);
                 if (order == VectorClock.Order.CONCURRENT) {
                     result.concurrent++;
@@ -73,11 +85,7 @@ public final class CausalCheck {
                 } else if (order == VectorClock.Order.BEFORE || order == VectorClock.Order.AFTER) {
                     boolean before = order == VectorClock.Order.BEFORE;
                     if (before) result.before++; else result.after++;
-                    Event first = before ? a : b, second = before ? b : a;
-                    if (first.r.getLamport() >= second.r.getLamport()) {
-                        result.violations++;
-                        result.lines.add("VIOLAÇÃO L: " + first.id() + " → " + second.id());
-                    }
+                    checkLamport(result, before ? a : b, before ? b : a);
                 } else {
                     result.fail("vetores iguais em eventos distintos: " + a.id() + ", " + b.id());
                 }

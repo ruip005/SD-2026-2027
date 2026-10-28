@@ -163,6 +163,29 @@ public final class ClockIntegrationTest {
         check(!CausalCheck.verificar(3,dir).ok(), "deteta ficheiro em falta");
     }
 
+    private static void localLamport(Path root) throws Exception {
+        Path dir = Files.createDirectory(root.resolve("lamport-local"));
+        Path local = dir.resolve("lider-p0.txt");
+        Files.writeString(dir.resolve("lider-p1.txt"), "");
+        Files.writeString(dir.resolve("lider-p2.txt"), "");
+        String first = record(1,"S01",20,5,"1,0,0").toLine();
+        Files.writeString(local, first + "\n" + record(2,"S04",21,4,"2,0,0").toLine());
+        CausalCheck.Result r = CausalCheck.verificar(3,dir);
+        check(!r.ok() && r.invalid == 0 && r.violations == 1, "deteta L decrescente na mesma partição");
+        check(r.lines.contains("VIOLAÇÃO L: p0#1 → p0#2"), "diagnóstico identifica o par local");
+        check(r.before == 0 && r.after == 0 && r.concurrent == 0 && r.distinctLamport == 0,
+                "pares locais não entram nas estatísticas entre partições");
+        Files.writeString(local, first + "\n" + record(2,"S04",21,5,"2,0,0").toLine());
+        r = CausalCheck.verificar(3,dir);
+        check(!r.ok() && r.violations == 1, "deteta L igual em eventos locais sucessivos");
+        Files.writeString(local, first + "\n" + record(2,"S04",21,6,"2,0,0").toLine());
+        check(CausalCheck.verificar(3,dir).ok(), "aceita L local estritamente crescente");
+        Files.writeString(local, first + "\n" + record(2,"S04",21,6,"2,0,0").toLine()
+                + "\n" + record(3,"S01",22,4,"3,0,0").toLine());
+        r = CausalCheck.verificar(3,dir);
+        check(r.violations == 2, "verifica também pares locais não consecutivos");
+    }
+
     public static void main(String[] args) throws Exception {
         Path root = Path.of(args[0]);
         Files.createDirectories(root);
@@ -172,6 +195,7 @@ public final class ClockIntegrationTest {
         concurrentLeader(root);
         tcpRecovery(root);
         checkerFailures(root);
+        localLamport(root);
         System.out.println("OK: " + checks + " verificações");
     }
 }
