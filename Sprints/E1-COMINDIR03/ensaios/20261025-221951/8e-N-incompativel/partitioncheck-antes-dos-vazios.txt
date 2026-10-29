@@ -1,0 +1,11 @@
+Partição 0
+  líder: 0 registos, 0 sensores distintos
+  FALHA: réplicas: esperadas 2, encontradas 0
+Partição 1
+  líder: 0 registos, 0 sensores distintos
+  FALHA: réplicas: esperadas 2, encontradas 0
+Partição 2
+  líder: 0 registos, 0 sensores distintos
+  FALHA: réplicas: esperadas 2, encontradas 0
+Total do sistema: 0 registos; soma das partições 0..2: 0
+RESULTADO: FALHOU

@@ -1,0 +1,14 @@
+Partição 0
+  líder: 131 registos, 6 sensores distintos
+  replica-1-p0.txt: igual ao líder
+  replica-3-p0.txt: igual ao líder
+Partição 1
+  líder: 105 registos, 7 sensores distintos
+  replica-1-p1.txt: igual ao líder
+  replica-2-p1.txt: igual ao líder
+Partição 2
+  líder: 104 registos, 6 sensores distintos
+  replica-2-p2.txt: igual ao líder
+  replica-3-p2.txt: igual ao líder
+Total do sistema: 340 registos; soma das partições 0..2: 340
+RESULTADO: OK

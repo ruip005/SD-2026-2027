@@ -1,0 +1,12 @@
+--- correto/PartitionLeader.java
++++ 8c-reinicio-zero/PartitionLeader.java
+@@ -101,6 +101,9 @@
+         this.vector = last == null ? new VectorClock(partitioner.count()) : last.getVector();
+         if (vector.size() != partitioner.count() || vector.get(k) != ultimoSeq)
+             throw new IllegalArgumentException("Estado persistido incompatível com a partição/N");
++        // FALHA: conserva seq, mas reinicia L e V.
++        this.lamport = 0;
++        this.vector = new VectorClock(partitioner.count());
+     }
+ 
+     /**

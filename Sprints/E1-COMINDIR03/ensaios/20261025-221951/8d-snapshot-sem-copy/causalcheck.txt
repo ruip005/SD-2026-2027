@@ -1,0 +1,12 @@
+p0: 2 registos
+p1: 1 registos
+p2: 1 registos
+VIOLAÇÃO L: p0#2 → p2#1
+Pares entre partições (a em partição menor que b):
+a → b: 3
+b → a: 0
+Pares causais: 3
+Pares concorrentes: 2
+Concorrentes com L distinto: 1 (50.0000%)
+Violações da condição de relógio: 1
+RESULTADO: FALHA

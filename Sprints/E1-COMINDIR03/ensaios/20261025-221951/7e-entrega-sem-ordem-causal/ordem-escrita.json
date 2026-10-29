@@ -1,0 +1,21 @@
+{
+  "alarme": {
+    "wall": "2026-10-25T22:21:36.371054Z",
+    "start": 163153497525700,
+    "end": 163153526173400,
+    "file": "replica-1-p1.txt",
+    "seq": 1,
+    "sensor": "ALARM-S01"
+  },
+  "origem": {
+    "wall": "2026-10-25T22:21:36.759678300Z",
+    "start": 163153913400700,
+    "end": 163153915020100,
+    "file": "replica-1-p0.txt",
+    "seq": 1,
+    "sensor": "S01"
+  },
+  "alarme_antes_da_origem": true,
+  "intervalo_minimo_ms": 387.2273,
+  "perda_simulada": "-Ddescartar=1 apenas na réplica 1"
+}

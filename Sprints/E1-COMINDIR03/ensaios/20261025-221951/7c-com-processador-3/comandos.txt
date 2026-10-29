@@ -1,0 +1,2 @@
+rajada 300 10
+sair

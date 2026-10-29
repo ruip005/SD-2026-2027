@@ -1,0 +1,39 @@
+--- correto/AlarmProcessor.java
++++ 8d-snapshot-sem-copy/AlarmProcessor.java
+@@ -37,18 +37,35 @@
+         if (r.getSensorId().startsWith("ALARM-")) return false;
+ 
+         String alarm = null;
++        VectorClock pendingVector = null;
++        long pendingLamport = 0;
++        String pendingSensor = null;
+         int target = -1;
+         synchronized (lock) {
+             // Um conjunto por partição também trata duplicados após reordenação.
+             if (!vistos.get(k).add(r.getSeq())) return false;
+             lamport = Math.max(lamport, r.getLamport());
+             vector.merge(r.getVector());
++            System.out.println("OBSERVADO p" + k + "#" + r.getSeq() + " L=" + lamport + " V=" + vector);
+             if (r.getTemperature() >= Wire.LIMIAR_ALARME) {
+                 String sensor = "ALARM-" + r.getSensorId();
+                 target = partitioner.of(sensor);
+                 // Captura um snapshot coerente; a publicação não retém o lock durante HTTP.
+-                alarm = Wire.in(sensor, r.getTemperature(), lamport, vector.copy());
++                pendingVector = vector; // FALHA: referência sem copy()
++                pendingLamport = lamport;
++                pendingSensor = sensor;
+             }
++        }
++        if (pendingVector != null) {
++            System.out.println("SNAPSHOT_CAPTURADO L=" + pendingLamport + " V=" + pendingVector);
++            // Barreira experimental para reproduzir uma intercalação entre threads.
++            long deadline = System.nanoTime() + 15000000000L;
++            while (!java.nio.file.Files.exists(java.nio.file.Path.of("libertar-snapshot"))) {
++                if (System.nanoTime() > deadline) throw new IllegalStateException("Barreira expirou");
++                try { Thread.sleep(10); } catch (InterruptedException e) { return false; }
++            }
++            alarm = Wire.in(pendingSensor, r.getTemperature(), pendingLamport, pendingVector);
++            System.out.println("SNAPSHOT_PUBLICADO " + alarm);
+         }
+         if (alarm != null) {
+             try {

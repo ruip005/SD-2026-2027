@@ -1,0 +1,17 @@
+{
+  "alarmes_publicados": 38,
+  "causais": 30542,
+  "concorrentes": 7060,
+  "concorrentes_L_distinto": 6792.666666666667,
+  "proporcao": 0.9608208157433628,
+  "REG_sem_carimbos_media_bytes": 50.72664987771007,
+  "REG_com_carimbos_media_bytes": 62.750636667633934,
+  "vetor_media_bytes": 7.842927220218602,
+  "registos": [
+    135.33333333333334,
+    106.33333333333333,
+    96.33333333333333
+  ],
+  "proporcao_ponderada": 0.9621340887629839,
+  "sobrecusto_carimbos_bytes": 12.023986789923867
+}
