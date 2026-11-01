@@ -13,60 +13,29 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Ferramenta de verificação a posteriori: lê os ficheiros {@code lider-p*.txt} e
- * {@code replica-*-p*.txt} de uma pasta e verifica se o sistema ficou correto. Não comunica com
- * ninguém; opera apenas sobre ficheiros. Executar no fim de cada ensaio.
- *
- * <p>Invocação: {@code PartitionCheck <N> <pasta>}.</p>
- *
- * <p>Para cada partição verifica: (1) todos os registos do líder satisfazem {@code of(sensor) == k};
- * (2) a sequência começa em 1, sem lacunas nem repetições; (3) existem exatamente
- * {@value #REPLICAS_ESPERADAS} réplicas, cada uma igual ao líder ou um prefixo dele (indicando os
- * registos em falta); (4) número de registos e de sensores distintos. No fim, o total do sistema
- * (todos os ficheiros {@code lider-p*.txt} da pasta) tem de coincidir com a soma das partições
- * {@code 0..N-1}.</p>
+ * Ferramenta de verificação a posteriori: lê os ficheiros {@code lider-p*.txt} e {@code replica-*-p*.txt} de
+ * uma pasta e verifica se o sistema ficou correto. Não comunica com ninguém; opera apenas sobre ficheiros.
+ * Executar no fim de cada ensaio.
  */
 public class PartitionCheck {
-    /** Número de réplicas que cada partição deve ter (fator de replicação R). */
     public static final int REPLICAS_ESPERADAS = 2;
 
-    /** Resultado global de uma verificação. */
     public static class Resultado {
-        /** Linhas do relatório, prontas a imprimir. */
         public final List<String> linhas = new ArrayList<>();
-        /** Verdadeiro se nenhuma verificação falhou. */
         public boolean ok = true;
 
-        /** Cria um resultado vazio e conforme. */
-        // Cria o relatório inicialmente sem falhas e com uma lista vazia de mensagens.
         public Resultado() {
         }
 
-        /**
-         * Regista uma falha e marca o resultado como não conforme.
-         *
-         * @param msg descrição da falha
-         */
-        // Acrescenta o diagnóstico ao relatório e marca a verificação como falhada.
         void falha(String msg) {
             ok = false;
             linhas.add("  FALHA: " + msg);
         }
     }
 
-    /** Classe utilitária: não se instancia. */
-    // Impede criar instâncias desta ferramenta, que é utilizada através de métodos estáticos.
     private PartitionCheck() {
     }
 
-    /**
-     * Lê as linhas não vazias de um ficheiro.
-     *
-     * @param f ficheiro a ler
-     * @return as linhas, sem as vazias
-     * @throws IOException se o ficheiro não puder ser lido
-     */
-    // Lê um ficheiro UTF-8, retirando linhas vazias e espaços exteriores.
     private static List<String> linhasDe(Path f) throws IOException {
         List<String> out = new ArrayList<>();
         for (String l : Files.readAllLines(f, StandardCharsets.UTF_8)) {
@@ -77,14 +46,6 @@ public class PartitionCheck {
         return out;
     }
 
-    /**
-     * Verifica todas as partições.
-     *
-     * @param n     número de partições
-     * @param pasta pasta com os ficheiros de um ensaio
-     * @return o relatório e o veredicto global
-     * @throws IOException se algum ficheiro não puder ser lido
-     */
     // Verifica partição e seq dos registos, quantidade de réplicas e se cada ficheiro é igual ou prefixo do líder.
     public static Resultado verificar(int n, Path pasta) throws IOException {
         Resultado res = new Resultado();
@@ -153,13 +114,6 @@ public class PartitionCheck {
         return res;
     }
 
-    /**
-     * Imprime o relatório.
-     *
-     * @param args {@code <N> <pasta>}
-     * @throws IOException se algum ficheiro não puder ser lido
-     */
-    // Recebe N e a pasta de ensaio, imprime o relatório e termina com código 1 se houver falhas.
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             System.err.println("Uso: PartitionCheck <N> <pasta>");

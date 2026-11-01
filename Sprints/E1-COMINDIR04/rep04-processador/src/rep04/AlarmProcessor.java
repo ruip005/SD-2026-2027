@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * Acumula conhecimento causal sem gerar eventos locais de relógio. Recebe os {@code LOTE} de todas
- * as partições, trata cada registo pela ordem com as regras da COMINDIR03 e mantém um
- * {@link HeartbeatMonitor} por partição (eventos em {@code monitor-processador.txt}).
+ * Acumula conhecimento causal sem gerar eventos locais de relógio. Recebe os {@code LOTE} de todas as
+ * partições, trata cada registo pela ordem com as regras da COMINDIR03 e mantém um {@link HeartbeatMonitor}
+ * por partição (eventos em {@code monitor-processador.txt}).
  */
 public final class AlarmProcessor {
     private final Partitioner partitioner;
@@ -26,12 +26,9 @@ public final class AlarmProcessor {
     private final List<Set<Long>> vistos = new ArrayList<>();
     private long lamport;
     private final VectorClock vector;
-    /** Um detetor por partição, indexado por {@code k}. */
     private final List<HeartbeatMonitor> monitores = new ArrayList<>();
-    /** Destino dos eventos {@code RECEBIDO} e dos eventos dos detetores. */
     private final Consumer<String> log;
 
-    // Inicializa Lp e Vp, um conjunto de seq observados por partição para detetar duplicados e um detetor por partição.
     public AlarmProcessor(int n, Publisher publisher, Consumer<String> log) {
         partitioner = new Partitioner(n);
         this.publisher = publisher;
@@ -43,12 +40,10 @@ public final class AlarmProcessor {
         }
     }
 
-    // Devolve os detetores, para a thread de verificação chamar check() em todos.
     public List<HeartbeatMonitor> getMonitores() {
         return monitores;
     }
 
-    /** Devolve o número de leituras novas aceites no lote, ou -1 se o lote foi rejeitado. */
     // Valida o LOTE, renova o detetor de k, assinala RECEBIDO e trata os registos um a um, pela ordem do lote.
     public int onLote(int k, String msg) {
         Batch b;
@@ -71,7 +66,6 @@ public final class AlarmProcessor {
         return aceites;
     }
 
-    /** Devolve true apenas quando uma leitura nova foi aceite. */
     // Ignora alarmes e duplicados, acumula Lp/Vp e publica um alarme quando a temperatura atinge o limiar.
     public boolean onRecord(int k, SensorRecord r) {
         if (partitioner.of(r.getSensorId()) != k || r.getVector().get(k) != r.getSeq()) {
@@ -111,7 +105,6 @@ public final class AlarmProcessor {
         return true;
     }
 
-    /** Ficheiro de eventos do detetor ({@code monitor-processador.txt}). */
     private static final Path MONITOR_FILE = Path.of("monitor-processador.txt");
 
     // Junta System.currentTimeMillis() ao evento; synchronized porque o chamam as threads das partições e a de verificação.
@@ -126,7 +119,6 @@ public final class AlarmProcessor {
         }
     }
 
-    // Subscreve todas as partições com uma thread por tópico, verifica os detetores a cada VERIFICACAO_MS e volta a subscrever se a ligação falhar.
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Uso: AlarmProcessor <N> [api]  [-Drep04.periodo=ms] [-Drep04.fator=f]");

@@ -16,22 +16,16 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Análise a posteriori do detetor de falhas e do envio em lote, a partir dos ficheiros
- * {@code hb-p<k>.txt}, {@code lider-p<k>.txt} e {@code monitor-<id>.txt} de uma pasta.
- *
- * <p>Invocação: {@code HeartbeatCheck <N> <pasta> [falhas.txt]}. O relatório é impresso e gravado em
- * {@code relatorio-heartbeat.txt} na pasta. Compara instantes escritos por processos diferentes, por
- * isso só é válido com todos os processos na mesma máquina (o mesmo relógio físico).</p>
+ * Análise a posteriori do detetor de falhas e do envio em lote, a partir dos ficheiros {@code hb-p<k>.txt},
+ * {@code lider-p<k>.txt} e {@code monitor-<id>.txt} de uma pasta.
  */
 public final class HeartbeatCheck {
-    // Impede instanciar a ferramenta de análise, que usa métodos estáticos.
     private HeartbeatCheck() { }
 
     /** Uma linha {@code inc;hb;instante;ultimoSeq;n;bytes} de {@code hb-p<k>.txt}. */
     private static final class Lote {
         final long inc, hb, instante, ultimoSeq;
         final int n, bytes;
-        // Interpreta os seis campos de uma linha do ficheiro de heartbeats do líder.
         Lote(String line) {
             String[] f = line.trim().split(";", -1);
             if (f.length != 6) throw new IllegalArgumentException("linha com " + f.length + " campos");
@@ -50,7 +44,6 @@ public final class HeartbeatCheck {
         final String tipo;
         final int k;
         final Map<String, String> campos = new HashMap<>();
-        // Interpreta o instante, o tipo, a partição e os campos chave=valor do detalhe.
         Evento(String line) {
             String[] f = line.trim().split(";", -1);
             if (f.length < 3 || !f[2].startsWith("p")) throw new IllegalArgumentException("evento mal formado");
@@ -74,15 +67,11 @@ public final class HeartbeatCheck {
     public static final class Result {
         public final List<String> lines = new ArrayList<>();
         public long invalid;
-        // Indica se todos os ficheiros esperados existiam e todas as linhas foram interpretadas.
         public boolean ok() { return invalid == 0; }
-        // Conta um erro nos dados e acrescenta a respetiva mensagem ao relatório.
         private void fail(String message) { invalid++; lines.add("FALHA: " + message); }
-        // Acrescenta uma linha formatada ao relatório, com ponto decimal independente da configuração regional.
         private void add(String format, Object... args) { lines.add(String.format(Locale.ROOT, format, args)); }
     }
 
-    // Lê os ficheiros da pasta e produz as secções do relatório pela ordem do enunciado.
     public static Result analisar(int n, Path folder, Path falhasFile) throws IOException {
         if (!Files.isDirectory(folder)) throw new IllegalArgumentException("Pasta inexistente: " + folder);
         Result res = new Result();
@@ -106,7 +95,6 @@ public final class HeartbeatCheck {
         return res;
     }
 
-    // Lê hb-p<k>.txt; um ficheiro em falta ou uma linha inválida contam como falha nos dados.
     private static List<Lote> lerLotes(Result res, Path file) throws IOException {
         List<Lote> out = new ArrayList<>();
         if (!Files.exists(file)) {
@@ -149,7 +137,6 @@ public final class HeartbeatCheck {
         return out;
     }
 
-    // Lê todos os monitor-<id>.txt da pasta, indexados pelo id do participante e por ordem de nome.
     private static Map<String, List<Evento>> lerMonitores(Result res, Path folder) throws IOException {
         Map<String, List<Evento>> out = new TreeMap<>();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(folder, "monitor-*.txt")) {
@@ -255,7 +242,6 @@ public final class HeartbeatCheck {
         res.add("total: %d falhas reais, %d falsas suspeitas, %d sem incarnação anterior", reais, falsas, semInc);
     }
 
-    // Devolve o último lote publicado com instante menor ou igual a t, ou null se não houver.
     private static Lote ultimoAntes(List<Lote> ls, long t) {
         Lote out = null;
         for (Lote l : ls) {
@@ -356,7 +342,6 @@ public final class HeartbeatCheck {
         }
     }
 
-    // Conta os eventos HB_PERDIDO e RECUPERACAO por participante e no total.
     private static void seccaoContagens(Result res, Map<String, List<Evento>> monitores) {
         res.lines.add("== HB_PERDIDO e RECUPERACAO");
         long perdidos = 0, recuperacoes = 0;
@@ -401,7 +386,6 @@ public final class HeartbeatCheck {
                 registosLote == 0 ? "-" : String.format(Locale.ROOT, "%.1f", (double) bytesLote / registosLote));
     }
 
-    // Executa a análise, imprime o relatório, grava-o na pasta e termina com 1 se faltarem ficheiros ou houver linhas inválidas.
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
             System.err.println("Uso: HeartbeatCheck <N> <pasta> [falhas.txt]");

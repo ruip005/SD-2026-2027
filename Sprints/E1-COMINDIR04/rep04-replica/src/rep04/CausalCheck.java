@@ -11,27 +11,21 @@ import java.util.Locale;
 
 /** Análise a posteriori; não impõe entrega causal nas réplicas. */
 public final class CausalCheck {
-    // Impede instanciar a ferramenta de análise, que usa métodos estáticos.
     private CausalCheck() { }
 
     private static final class Event {
         final int k;
         final SensorRecord r;
         final VectorClock v;
-        // Associa um registo à sua partição e guarda o vetor usado nas comparações entre eventos.
         Event(int k, SensorRecord r) { this.k = k; this.r = r; this.v = r.getVector(); }
-        // Identifica um evento como p<partição>#<seq> para apresentar os diagnósticos.
         String id() { return "p" + k + "#" + r.getSeq(); }
     }
 
     public static final class Result {
         public final List<String> lines = new ArrayList<>();
         public long before, after, concurrent, distinctLamport, violations, invalid;
-        // Calcula a fração de pares concorrentes com L diferente, devolvendo zero se não houver concorrentes.
         public double proportion() { return concurrent == 0 ? 0 : (double) distinctLamport / concurrent; }
-        // Indica se a análise terminou sem dados inválidos e sem violações da condição de relógio.
         public boolean ok() { return invalid == 0 && violations == 0; }
-        // Conta um erro nos dados e acrescenta a respetiva mensagem ao relatório.
         private void fail(String message) { invalid++; lines.add("FALHA: " + message); }
     }
 
@@ -116,7 +110,6 @@ public final class CausalCheck {
         return result;
     }
 
-    // Recebe N e a pasta, executa a análise, imprime o relatório e termina com código 1 se a verificação falhar.
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             System.err.println("Uso: CausalCheck <N> <pasta>");
