@@ -289,6 +289,7 @@ public final class HeartbeatCheck {
             }
             for (Map.Entry<String, List<Evento>> e : monitores.entrySet()) {
                 boolean acompanha = false;
+                boolean ouviu = false; // recebeu algum heartbeat de p<k> antes da suspeita
                 Evento suspeita = null;
                 for (Evento ev : e.getValue()) {
                     if (ev.k != k) continue;
@@ -297,10 +298,15 @@ public final class HeartbeatCheck {
                         suspeita = ev;
                         break;
                     }
+                    if (ev.inc() > 0) ouviu = true;
                 }
                 if (!acompanha) continue;
                 if (suspeita == null) {
                     res.add("falha p%d em %d: %s não suspeitou", k, tFalha, e.getKey());
+                } else if (!ouviu) {
+                    // o temporizador contou desde o arranque do participante, não desde um heartbeat
+                    res.add("falha p%d em %d: %s suspeitou após %.3f s, mas nunca tinha recebido heartbeat de p%d (não conta)",
+                            k, tFalha, e.getKey(), (suspeita.instante - tFalha) / 1000.0, k);
                 } else {
                     long d = suspeita.instante - tFalha;
                     tempos.add(d);
