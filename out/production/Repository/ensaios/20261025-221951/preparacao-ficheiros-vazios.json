@@ -1,0 +1,54 @@
+{
+  "nota": "Ficheiros sem qualquer append representam prefixos vazios; não se acrescentaram linhas de dados.",
+  "preparacao": [
+    {
+      "ensaio": "7e-entrega-sem-ordem-causal",
+      "ficheiros_criados_vazios": [
+        "replica-2-p2.txt",
+        "replica-3-p2.txt"
+      ]
+    },
+    {
+      "ensaio": "8a-sem-merge",
+      "ficheiros_criados_vazios": [
+        "replica-1-p0.txt",
+        "replica-3-p0.txt"
+      ]
+    },
+    {
+      "ensaio": "8b-lamport-sem-mensagem",
+      "ficheiros_criados_vazios": [
+        "replica-1-p0.txt",
+        "replica-3-p0.txt"
+      ]
+    },
+    {
+      "ensaio": "8c-reinicio-zero",
+      "ficheiros_criados_vazios": [
+        "replica-1-p0.txt",
+        "replica-2-p2.txt",
+        "replica-3-p2.txt",
+        "replica-3-p0.txt"
+      ]
+    },
+    {
+      "ensaio": "8e-N-incompativel",
+      "ficheiros_criados_vazios": [
+        "replica-1-p0.txt",
+        "replica-1-p1.txt",
+        "replica-2-p1.txt",
+        "replica-2-p2.txt",
+        "replica-3-p2.txt",
+        "replica-3-p0.txt"
+      ]
+    },
+    {
+      "ensaio": "suplementar-reinicio-antes-publicacao",
+      "ficheiros_criados_vazios": [
+        "replica-2-p2.txt",
+        "replica-3-p2.txt",
+        "replica-3-p0.txt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+Réplica 1 p0 pronta (ultimo=0)
+Réplica 1 p1 pronta (ultimo=0)
+DESCARTADO (simulação) p: REG;127.0.0.1;7000;1;S01;29.3;2026-10-25T22:21:35;1;1,0,0
+EM ESPERA p0: 2 (falta 1)
+EM ESPERA p0: 3 (falta 1)
+EM ESPERA p0: 4 (falta 1)
+EM ESPERA p0: 5 (falta 1)
+EM ESPERA p0: 6 (falta 1)
+EM ESPERA p0: 7 (falta 1)
+EM ESPERA p0: 8 (falta 1)
+EM ESPERA p0: 9 (falta 1)
+EM ESPERA p0: 10 (falta 1)
+EM ESPERA p0: 11 (falta 1)
+EM ESPERA p0: 12 (falta 1)
+RECUPERAÇÃO p0: 1..1 pedida a 127.0.0.1:7000
+RECUPERADO p0: 1..1
