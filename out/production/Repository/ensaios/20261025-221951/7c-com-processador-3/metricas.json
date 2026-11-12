@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "output": "p0: 125 registos\np1: 106 registos\np2: 99 registos\nPares entre partições (a em partição menor que b):\na → b: 12430\nb → a: 14414\nPares causais: 26844\nPares concorrentes: 9275\nConcorrentes com L distinto: 8982 (96.8410%)\nViolações da condição de relógio: 0\nRESULTADO: OK\n",
+  "registos": [
+    125,
+    106,
+    99
+  ],
+  "alarmes_gravados": 30,
+  "originais": 300,
+  "alarmes_publicados": 30,
+  "causais": 26844,
+  "concorrentes": 9275,
+  "concorrentes_L_distinto": 8982,
+  "proporcao": 0.9684097035040431,
+  "REG_sem_carimbos_media_bytes": 50.56363636363636,
+  "REG_com_carimbos_media_bytes": 62.32424242424243,
+  "vetor_media_bytes": 7.6878787878787875,
+  "partitioncheck_exit": 0
+}

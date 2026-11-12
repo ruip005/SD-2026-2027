@@ -1,0 +1,11 @@
+--- correto/PartitionLeader.java
++++ 8b-lamport-sem-mensagem/PartitionLeader.java
+@@ -152,7 +152,7 @@
+         synchronized (lock) {
+             try {
+                 // Prepara o novo estado sem alterar o estado confirmado se append falhar.
+-                long nextL = Math.incrementExact(Math.max(lamport, receivedL));
++                long nextL = Math.incrementExact(lamport);
+                 VectorClock nextV = vector.copy();
+                 nextV.merge(receivedV);
+                 nextV.tick(k);
