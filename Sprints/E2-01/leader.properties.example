@@ -1,0 +1,8 @@
+# Copia este ficheiro para "leader.properties" (esse NAO vai para o Git) e preenche.
+# Em alternativa usa as variaveis de ambiente DISCORD_TOKEN e GUILD_ID.
+
+# Token do bot: Developer Portal > a tua aplicacao > Bot > Reset Token
+token=COLA_AQUI_O_TOKEN
+
+# Id do servidor de teste: Modo de programador ligado > botao direito no servidor > Copiar ID
+guild_id=000000000000000000

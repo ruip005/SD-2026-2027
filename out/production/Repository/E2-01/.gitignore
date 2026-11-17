@@ -1,0 +1,14 @@
+# --- SEGREDOS: nunca vao para o repositorio ---
+leader.properties
+.env
+*.env
+token.txt
+master.key
+*.key
+
+# --- build / IDE ---
+target/
+out/
+.idea/
+*.iml
+.DS_Store
