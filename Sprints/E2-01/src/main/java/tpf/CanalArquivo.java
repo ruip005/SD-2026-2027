@@ -22,4 +22,9 @@ public final class CanalArquivo {
         }
         return NOME_CANAL.equalsIgnoreCase(nomeDoCanal);
     }
+
+    /** Confirma a identidade do canal por ID, evitando aceitar outro canal com nome igual. */
+    public static boolean eCanalArquivo(long idDoCanal, long idDoArquivo) {
+        return idDoCanal > 0 && idDoCanal == idDoArquivo;
+    }
 }

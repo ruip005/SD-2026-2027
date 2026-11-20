@@ -118,6 +118,9 @@ public class TestesLogica {
         verificar("mensagem privada (DM) e ignorada", !CanalArquivo.deveProcessar(false, false, "arquivo"), "");
         verificar("canal null nao rebenta", !CanalArquivo.deveProcessar(false, true, null), "");
         verificar("#arquivo-antigo nao conta", !CanalArquivo.deveProcessar(false, true, "arquivo-antigo"), "");
+        verificar("ID do canal arquivo e aceite", CanalArquivo.eCanalArquivo(123, 123), "");
+        verificar("outro canal com nome igual e recusado por ID", !CanalArquivo.eCanalArquivo(123, 456), "");
+        verificar("ID de canal inválido é recusado", !CanalArquivo.eCanalArquivo(0, 0), "");
     }
 
     static void configuracao() throws IOException {

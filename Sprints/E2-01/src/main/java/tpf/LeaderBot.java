@@ -4,9 +4,11 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -28,6 +30,12 @@ import java.util.Map;
  */
 public class LeaderBot extends ListenerAdapter {
 
+    private final long canalArquivoId;
+
+    private LeaderBot(long canalArquivoId) {
+        this.canalArquivoId = canalArquivoId;
+    }
+
     public static void main(String[] args) throws Exception {
         tpf.Configuracao cfg = Configuracao.carregar();
 
@@ -35,7 +43,6 @@ public class LeaderBot extends ListenerAdapter {
         // (Bot > Privileged Gateway Intents > Message Content Intent), senao o login falha.
         JDA jda = JDABuilder.createDefault(cfg.getToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(new LeaderBot())
                 .build()
                 .awaitReady();
 
@@ -47,6 +54,17 @@ public class LeaderBot extends ListenerAdapter {
             return;
         }
 
+        Role papelAdmin = guild.getRolesByName(Permissoes.PAPEL_ADMIN, true).stream()
+                .findFirst()
+                .orElseGet(() -> guild.createRole().setName(Permissoes.PAPEL_ADMIN).complete());
+        TextChannel canalArquivo = guild.getTextChannelsByName(CanalArquivo.NOME_CANAL, true).stream()
+                .findFirst()
+                .orElseGet(() -> guild.createTextChannel(CanalArquivo.NOME_CANAL).complete());
+        System.out.println("Recursos Discord prontos: papel " + papelAdmin.getName()
+                + " e canal #" + canalArquivo.getName() + ".");
+
+        jda.addEventListener(new LeaderBot(canalArquivo.getIdLong()));
+
         // Guild commands aparecem logo (os globais podem demorar ate 1 hora).
         // updateCommands() substitui a lista inteira: comandos antigos desaparecem.
         guild.updateCommands().addCommands(
@@ -55,16 +73,20 @@ public class LeaderBot extends ListenerAdapter {
                 Commands.slash(Comandos.ESTADO, "Mostra o estado do líder"),
                 Commands.slash(Comandos.CONFIG, "Configura o líder (só admin-arquivo)")
                         .addSubcommands(new SubcommandData("r", "Define o fator de replicação R")
-                                .addOption(OptionType.INTEGER, Comandos.ARG_N, "Novo valor de R", true)),
+                                .addOption(OptionType.INTEGER, Comandos.ARG_N, "Novo valor de R", true))
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED),
                 Commands.slash(Comandos.RECUPERAR, "Recupera registos entre dois números de sequência")
                         .addOption(OptionType.INTEGER, Comandos.ARG_DE, "Primeiro número de sequência", true)
                         .addOption(OptionType.INTEGER, Comandos.ARG_ATE, "Último número de sequência", true),
-                Commands.slash(Comandos.REPLICA_TOKEN, "Gera um token para uma nova réplica (só admin-arquivo)"),
+                Commands.slash(Comandos.REPLICA_TOKEN, "Gera um token para uma nova réplica (só admin-arquivo)")
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED),
                 Commands.slash(Comandos.REPLICA_REMOVER, "Remove uma réplica (só admin-arquivo)")
-                        .addOption(OptionType.STRING, Comandos.ARG_ID, "Id da réplica", true),
+                        .addOption(OptionType.STRING, Comandos.ARG_ID, "Id da réplica", true)
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED),
                 Commands.slash(Comandos.RAJADA, "Envia uma rajada de registos de teste (só admin-arquivo)")
                         .addOption(OptionType.INTEGER, Comandos.ARG_N, "Número de registos", true)
                         .addOption(OptionType.INTEGER, Comandos.ARG_INTERVALO_MS, "Intervalo entre registos (ms)", true)
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED)
         ).queue(
                 ok -> System.out.println("LeaderBot online em \"" + guild.getName() + "\" com "
                         + Comandos.TODOS.size() + " comandos registados."),
@@ -73,6 +95,14 @@ public class LeaderBot extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if (event.getGuild() == null
+                || !CanalArquivo.eCanalArquivo(event.getChannel().getIdLong(), canalArquivoId)) {
+            event.reply("Os comandos só podem ser usados em #" + CanalArquivo.NOME_CANAL + ".")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
         // Papeis do membro que escreveu o comando (vem no proprio pedido, nao precisa de intent extra).
         List<String> papeis = new ArrayList<>();
         if (event.getMember() != null) {
@@ -101,7 +131,8 @@ public class LeaderBot extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         boolean autorEBot = event.getAuthor().isBot() || event.isWebhookMessage();
-        if (!CanalArquivo.deveProcessar(autorEBot, event.isFromGuild(), event.getChannel().getName())) {
+        if (!CanalArquivo.deveProcessar(autorEBot, event.isFromGuild(), event.getChannel().getName())
+                || !CanalArquivo.eCanalArquivo(event.getChannel().getIdLong(), canalArquivoId)) {
             return;
         }
         // Neste sprint so detetamos e registamos na consola; o arquivo vem em sprints seguintes.
