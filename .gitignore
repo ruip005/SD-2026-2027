@@ -1,1 +1,17 @@
 .clawdea/REPO_STATE.md
+
+# Segredos locais
+leader.properties
+**/leader.properties
+.env
+*.env
+token.txt
+master.key
+*.key
+
+# Artefactos de build e IDE
+target/
+out/
+.idea/
+*.iml
+.DS_Store
